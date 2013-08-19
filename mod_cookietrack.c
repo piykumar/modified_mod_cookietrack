@@ -513,8 +513,6 @@ static int spot_cookie(request_rec *r)
 
                 // otherwise, just set it
                 } else {
-                   // PIYOLD: sprintf( new_cookie_value,
-                   //          "%s.%" APR_TIME_T_FMT, rname, apr_time_now() );
                    sprintf( new_cookie_value,
                              "%s.%d.%ld.%" APR_TIME_T_FMT, rname, true_random(), randomgen(), apr_time_now() );				   
                 }
@@ -532,7 +530,7 @@ static int spot_cookie(request_rec *r)
 
             }
 
-        // it's either carbage, or not set; either way,
+        // it's either garbage, or not set; either way,
         // we need to generate a new one
         } else {
             // if we have some sort of library that's generating the
@@ -544,8 +542,6 @@ static int spot_cookie(request_rec *r)
 
             // otherwise, just set it
             } else {
-                // PIYOLD: sprintf( new_cookie_value,
-                //         "%s.%" APR_TIME_T_FMT, rname, apr_time_now() );
                 sprintf( new_cookie_value,
                          "%s.%d.%ld.%" APR_TIME_T_FMT, rname, true_random(), randomgen(), apr_time_now() );						 
             }
