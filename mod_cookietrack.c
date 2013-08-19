@@ -508,7 +508,7 @@ static int spot_cookie(request_rec *r)
                 // UID, call that with the cookie we would be setting
                 if( _EXTERNAL_UID_FUNCTION ) {
                     char ts[ _MAX_COOKIE_LENGTH ];
-                    sprintf( ts, "%" APR_TIME_T_FMT, randomgen() );
+                    sprintf( ts, "%" APR_TIME_T_FMT, apr_time_now() );
                     gen_uid( new_cookie_value, ts, rname );
 
                 // otherwise, just set it
@@ -537,7 +537,7 @@ static int spot_cookie(request_rec *r)
             // UID, call that with the cookie we would be setting
             if( _EXTERNAL_UID_FUNCTION ) {
                 char ts[ _MAX_COOKIE_LENGTH ];
-                sprintf( ts, "%" APR_TIME_T_FMT, randomgen() );
+                sprintf( ts, "%" APR_TIME_T_FMT, apr_time_now() );
                 gen_uid( new_cookie_value, ts, rname );
 
             // otherwise, just set it
