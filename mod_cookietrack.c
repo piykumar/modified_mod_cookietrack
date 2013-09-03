@@ -34,7 +34,10 @@
 #include "apr_general.h"
 #include "apr_portable.h"
 #include <apr_pools.h>
-
+#include "apr_base64.h"
+#if APR_HAVE_UNISTD_H
+#include <unistd.h>     /* for getpid */
+#endif
 
 module AP_MODULE_DECLARE_DATA cookietrack_module;
 
@@ -135,6 +138,8 @@ typedef struct {
     setting cookies
 
    ******************************************** */
+  
+
    
    
 static void get_system_time(apr_uint64_t *uuid_time)
@@ -448,31 +453,30 @@ static int spot_cookie(request_rec *r)
     // Should we look at a header?
     /// apr_table_get returns a const char, so strdup it.
     if( xff = apr_pstrdup( r->pool, apr_table_get(r->headers_in, dcfg->cookie_ip_header) ) ) {
-
-        // There might be multiple addresses in the header
-        // Check if there's a comma in there somewhere
-
-        // no comma, this is the address we can use
-        if( (rname = strrchr(xff, ',')) == NULL ) {
-            rname = xff;
-
-        // whitespace/commas left, remove 'm
-        } else {
-
-            // move past the comma
-            rname++;
-
-            // and any whitespace we might find
-            while( *rname == ' ' ) {
-                rname++;
-            }
-        }
-
-    // otherwise, get it from the remote host
+		char bsalt[64];
+		char salt[128];
+		char digest[128];
+		apr_generate_random_bytes(bsalt, sizeof(bsalt));
+		apr_base64_encode(salt, bsalt, sizeof(bsalt));
+		apr_md5_encode(xff, salt, digest, sizeof(digest));
+		rname = digest;
+		// otherwise, get it from the remote host
     } else {
-        rname = ap_get_remote_host( r->connection, r->per_dir_config,
+		char *xff         = NULL;
+        xff = ap_get_remote_host( r->connection, r->per_dir_config,
                                     REMOTE_NAME, NULL );
+		char bsalt[64];
+		char salt[128];
+		char digest[128];
+		apr_generate_random_bytes(bsalt, sizeof(bsalt));
+		apr_base64_encode(salt, bsalt, sizeof(bsalt));
+		apr_md5_encode(xff, salt, digest, sizeof(digest));
+		rname = digest;
     }
+	
+	char hostname[257];
+	gethostname(hostname, 256);
+	
 
     _DEBUG && fprintf( stderr, "Remote Address: %s\n", rname );
 
@@ -514,7 +518,7 @@ static int spot_cookie(request_rec *r)
                 // otherwise, just set it
                 } else {
                    sprintf( new_cookie_value,
-                             "%s.%d.%ld.%" APR_TIME_T_FMT, rname, true_random(), randomgen(), apr_time_now() );				   
+                             "%s.%s.%d.%ld.%ld.%" APR_TIME_T_FMT, rname, hostname, true_random(), (long int) getpid(), randomgen(), apr_time_now() );				   
                 }
 
             // it's set to something reasonable - note we're still setting
@@ -543,7 +547,7 @@ static int spot_cookie(request_rec *r)
             // otherwise, just set it
             } else {
                 sprintf( new_cookie_value,
-                         "%s.%d.%ld.%" APR_TIME_T_FMT, rname, true_random(), randomgen(), apr_time_now() );						 
+                         "%s.%s.%d.%ld.%ld.%" APR_TIME_T_FMT, rname, hostname, true_random(), (long int) getpid(), randomgen(), apr_time_now() );						 
             }
         }
     }
