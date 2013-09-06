@@ -73,7 +73,7 @@ module AP_MODULE_DECLARE_DATA cookietrack_module;
 #ifdef MAX_COOKIE_LENGTH        // maximum size of the cookie value
 #define _MAX_COOKIE_LENGTH MAX_COOKIE_LENGTH
 #else
-#define _MAX_COOKIE_LENGTH 120   // At least IP address + dots + microsecond timestamp
+#define _MAX_COOKIE_LENGTH 130   // At least IP address + dots + microsecond timestamp
 #endif                          // So 16 + 4 + 16 = 36
 
 #ifdef DEBUG                    // To print diagnostics to the error log
@@ -517,9 +517,14 @@ static int spot_cookie(request_rec *r)
 
                 // otherwise, just set it
                 } else {
-                   sprintf( new_cookie_value,
+				
+				   char mbuf[APR_UUID_FORMATTED_LENGTH + 1];
+				   char tmp_cookie[ _MAX_COOKIE_LENGTH ];
+				   sprintf( tmp_cookie,
                              "%s.%s.%d.%ld.%ld.%" APR_TIME_T_FMT, rname, hostname, true_random(), (long int) getpid(), randomgen(), apr_time_now() );				   
-                }
+                   apr_uuid_format(mbuf, tmp_cookie);
+				   sprintf( new_cookie_value,"%s.%" APR_TIME_T_FMT, mbuf, apr_time_now() );
+				}
 
             // it's set to something reasonable - note we're still setting
             // a new cookie, even when there's no expires requested, because
@@ -546,8 +551,15 @@ static int spot_cookie(request_rec *r)
 
             // otherwise, just set it
             } else {
-                sprintf( new_cookie_value,
-                         "%s.%s.%d.%ld.%ld.%" APR_TIME_T_FMT, rname, hostname, true_random(), (long int) getpid(), randomgen(), apr_time_now() );						 
+
+				   char mbuf[APR_UUID_FORMATTED_LENGTH + 1];
+				   char tmp_cookie[ _MAX_COOKIE_LENGTH ];
+				   sprintf( tmp_cookie,
+                             "%s.%s.%d.%ld.%ld.%" APR_TIME_T_FMT, rname, hostname, true_random(), (long int) getpid(), randomgen(), apr_time_now() );				   
+                   apr_uuid_format(mbuf, tmp_cookie);
+				   sprintf( new_cookie_value,"%s.%" APR_TIME_T_FMT, mbuf, apr_time_now() );			
+
+			
             }
         }
     }
